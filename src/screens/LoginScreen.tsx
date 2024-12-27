@@ -12,10 +12,16 @@ type Props = {
 const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage,setErrorMessage] = useState<string | null>(null); 
 
   const handleLogin = () => {
-    console.log('Login attempt with:', email, password);
-    navigation.navigate('Dashboard');
+    if(email && password){
+      console.log('Login attempt with:', email, password);
+      navigation.navigate('Dashboard');
+    }
+    else{
+      setErrorMessage("Please fill in all the fields!");
+    }
   };
 
   return (
@@ -37,6 +43,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
           onChangeText={setPassword}
           secureTextEntry
         />
+        {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Login</Text>
         </TouchableOpacity>
@@ -44,6 +51,8 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
     </SafeAreaView>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   container: {
@@ -71,6 +80,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingHorizontal: 10,
     backgroundColor: '#fff',
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 10,
+    fontSize: 14,
   },
   button: {
     backgroundColor: '#007AFF',
