@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, SafeAreaView, Alert } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../redux/store';
-import { addTransaction } from '../redux/financesSlice';
+import { addTransaction, editTransaction, deleteTransaction } from '../redux/financesSlice';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../App';
 
@@ -15,6 +15,7 @@ type Props = {
 const IncomeScreen: React.FC<Props> = ({ navigation }) => {
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
   const dispatch = useDispatch();
   const incomeTransactions = useSelector((state: RootState) => 
     state.finances.transactions.filter(t => t.type === 'income')
@@ -22,16 +23,42 @@ const IncomeScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleAddIncome = () => {
     if (amount && category) {
-      dispatch(addTransaction({
-        id: Date.now().toString(),
-        amount: parseFloat(amount),
-        category,
-        date: new Date().toISOString(),
-        type: 'income'
-      }));
+      if (editingId) {
+        dispatch(editTransaction({
+          id: editingId,
+          amount: parseFloat(amount),
+          category
+        }));
+        setEditingId(null);
+      } else {
+        dispatch(addTransaction({
+          id: Date.now().toString(),
+          amount: parseFloat(amount),
+          category,
+          date: new Date().toISOString(),
+          type: 'income'
+        }));
+      }
       setAmount('');
       setCategory('');
     }
+  };
+
+  const handleEdit = (transaction: { id: string; amount: number; category: string }) => {
+    setEditingId(transaction.id);
+    setAmount(transaction.amount.toString());
+    setCategory(transaction.category);
+  };
+
+  const handleDelete = (id: string) => {
+    Alert.alert(
+      "Delete Transaction",
+      "Are you sure you want to delete this transaction?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "OK", onPress: () => dispatch(deleteTransaction(id)) }
+      ]
+    );
   };
 
   return (
@@ -52,7 +79,7 @@ const IncomeScreen: React.FC<Props> = ({ navigation }) => {
           onChangeText={setCategory}
         />
         <TouchableOpacity style={styles.addButton} onPress={handleAddIncome}>
-          <Text style={styles.buttonText}>Add Income</Text>
+          <Text style={styles.buttonText}>{editingId ? 'Update Income' : 'Add Income'}</Text>
         </TouchableOpacity>
       </View>
       <FlatList
@@ -60,9 +87,19 @@ const IncomeScreen: React.FC<Props> = ({ navigation }) => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.transactionItem}>
-            <Text style={styles.transactionAmount}>${item.amount.toFixed(2)}</Text>
-            <Text style={styles.transactionCategory}>{item.category}</Text>
-            <Text style={styles.transactionDate}>{new Date(item.date).toLocaleDateString()}</Text>
+            <View>
+              <Text style={styles.transactionAmount}>${item.amount.toFixed(2)}</Text>
+              <Text style={styles.transactionCategory}>{item.category}</Text>
+              <Text style={styles.transactionDate}>{new Date(item.date).toLocaleDateString()}</Text>
+            </View>
+            <View style={styles.actionButtons}>
+              <TouchableOpacity onPress={() => handleEdit(item)}>
+                <Text style={styles.editButton}>Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleDelete(item.id)}>
+                <Text style={styles.deleteButton}>Delete</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       />
@@ -84,18 +121,25 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: 20,
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   input: {
     height: 40,
-    borderColor: 'gray',
+    borderColor: '#ddd',
     borderWidth: 1,
     marginBottom: 10,
     paddingHorizontal: 10,
-    backgroundColor: '#fff',
     borderRadius: 5,
   },
   addButton: {
-    backgroundColor: '#4CD964',
+    backgroundColor: '#4CAF50',
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
@@ -108,24 +152,41 @@ const styles = StyleSheet.create({
   transactionItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    alignItems: 'center',
     backgroundColor: '#fff',
-    marginBottom: 5,
-    borderRadius: 5,
+    padding: 15,
+    marginBottom: 10,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   transactionAmount: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#4CD964',
+    color: '#4CAF50',
   },
   transactionCategory: {
     fontSize: 16,
+    color: '#333',
   },
   transactionDate: {
     fontSize: 14,
     color: '#666',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+  },
+  editButton: {
+    color: '#2196F3',
+    marginRight: 10,
+    fontWeight: 'bold',
+  },
+  deleteButton: {
+    color: '#F44336',
+    fontWeight: 'bold',
   },
 });
 
