@@ -1,4 +1,4 @@
-import {createSlice, PayloadAction} from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface Transaction {
   id: string;
@@ -8,11 +8,20 @@ interface Transaction {
   type: 'income' | 'expense';
 }
 
+interface Goal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline: string;
+}
+
 interface FinancesState {
   balance: number;
   income: number;
   expenses: number;
   transactions: Transaction[];
+  goals: Goal[];
 }
 
 const initialState: FinancesState = {
@@ -20,6 +29,7 @@ const initialState: FinancesState = {
   income: 0,
   expenses: 0,
   transactions: [],
+  goals: [],
 };
 
 const financesSlice = createSlice({
@@ -63,9 +73,29 @@ const financesSlice = createSlice({
         state.transactions = state.transactions.filter(t => t.id !== action.payload);
       }
     },
+    addGoal: (state, action: PayloadAction<Goal>) => {
+      state.goals.push(action.payload);
+    },
+    updateGoal: (state, action: PayloadAction<{ id: string; currentAmount: number }>) => {
+      const goal = state.goals.find(g => g.id === action.payload.id);
+      if (goal) {
+        goal.currentAmount = action.payload.currentAmount;
+      }
+    },
+    deleteGoal: (state, action: PayloadAction<string>) => {
+      state.goals = state.goals.filter(g => g.id !== action.payload);
+    },
   },
 });
 
-export const { addTransaction, editTransaction, deleteTransaction } = financesSlice.actions;
+export const { 
+  addTransaction, 
+  editTransaction, 
+  deleteTransaction, 
+  addGoal, 
+  updateGoal, 
+  deleteGoal 
+} = financesSlice.actions;
+
 export default financesSlice.reducer;
 
