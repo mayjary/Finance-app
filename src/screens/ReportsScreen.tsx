@@ -1,10 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
 import { PieChart } from 'react-native-chart-kit';
+import { Svg, Text as SvgText } from 'react-native-svg';
 
-const ReportsScreen = () => {
+const { width } = Dimensions.get('window');
+
+const ReportsScreen: React.FC = () => {
   const transactions = useSelector((state: RootState) => state.finances.transactions);
 
   const incomeTotal = transactions
@@ -20,14 +23,14 @@ const ReportsScreen = () => {
     .reduce((acc, t) => {
       acc[t.category] = (acc[t.category] || 0) + t.amount;
       return acc;
-    }, {});
+    }, {} as Record<string, number>);
 
   const pieChartData = Object.entries(expensesByCategory).map(([name, value], index) => ({
     name,
     population: value,
-    color: `rgba(${Math.random() * 255},${Math.random() * 255},${Math.random() * 255},1)`,
+    color: `hsl(${index * 45 % 360}, 70%, 50%)`,
     legendFontColor: '#7F7F7F',
-    legendFontSize: 15,
+    legendFontSize: 12,
   }));
 
   return (
@@ -50,25 +53,29 @@ const ReportsScreen = () => {
       </View>
 
       <Text style={styles.sectionTitle}>Expenses by Category</Text>
-      <PieChart
-        data={pieChartData}
-        width={300}
-        height={200}
-        chartConfig={{
-          backgroundColor: '#e26a00',
-          backgroundGradientFrom: '#fb8c00',
-          backgroundGradientTo: '#ffa726',
-          decimalPlaces: 2,
-          color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-          style: {
-            borderRadius: 16,
-          },
-        }}
-        accessor="population"
-        backgroundColor="transparent"
-        paddingLeft="15"
-        absolute
-      />
+      {pieChartData.length > 0 ? (
+        <PieChart
+          data={pieChartData}
+          width={width - 40}
+          height={220}
+          chartConfig={{
+            backgroundColor: '#1cc910',
+            backgroundGradientFrom: '#eff3ff',
+            backgroundGradientTo: '#efefef',
+            decimalPlaces: 2,
+            color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+            style: {
+              borderRadius: 16,
+            },
+          }}
+          accessor="population"
+          backgroundColor="transparent"
+          paddingLeft="15"
+          absolute
+        />
+      ) : (
+        <Text style={styles.noDataText}>No expense data available</Text>
+      )}
     </ScrollView>
   );
 };
@@ -77,11 +84,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: '#f5f5f5',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: '#333',
   },
   summaryContainer: {
     flexDirection: 'row',
@@ -92,18 +101,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   summaryLabel: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#666',
   },
   summaryValue: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#333',
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     marginTop: 20,
     marginBottom: 10,
+    color: '#333',
+  },
+  noDataText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
 
